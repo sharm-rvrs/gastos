@@ -3,7 +3,7 @@ import { MantineProvider, ColorSchemeScript } from "@mantine/core";
 import { Notifications } from "@mantine/notifications";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import SessionProvider from "@/components/SessionProvider";
+import SessionProvider from "@/components/ui/SessionProvider";
 import "@mantine/core/styles.css";
 import "@mantine/notifications/styles.css";
 import "@mantine/charts/styles.css";

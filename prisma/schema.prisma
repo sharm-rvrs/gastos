@@ -16,52 +16,71 @@ model User {
   email     String   @unique
   name      String?
   image     String?
+  payday    Int?     // day of month e.g. 15 or 30
   createdAt DateTime @default(now())
 
   expenses  Expense[]
   budgets   Budget[]
   goals     SavingsGoal[]
+  wallets   Wallet[]
 }
-
+ 
 model Expense {
-  id          String   @id @default(cuid())
-  amount      Float
+  id          String    @id @default(cuid())
+  amount      Decimal   @db.Decimal(10, 2)
   description String
   category    Category
-  date        DateTime @default(now())
-  isRecurring Boolean  @default(false)
-  createdAt   DateTime @default(now())
-
-  userId String
-  user   User   @relation(fields: [userId], references: [id])
+  date        DateTime  @default(now())
+  isRecurring Boolean   @default(false)
+  isSplit     Boolean   @default(false)
+  totalAmount Decimal?  @db.Decimal(10, 2)
+  splitWith   String?
+  yourShare   Decimal?  @db.Decimal(10, 2)
+  deletedAt   DateTime?
+  createdAt   DateTime  @default(now())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  walletId    String?
+  wallet      Wallet?   @relation(fields: [walletId], references: [id])
 }
-
+ 
 model Budget {
   id        String   @id @default(cuid())
   category  Category
-  limit     Float
+  limit     Decimal  @db.Decimal(10, 2)
   month     Int
   year      Int
   createdAt DateTime @default(now())
-
-  userId String
-  user   User   @relation(fields: [userId], references: [id])
-
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
   @@unique([userId, category, month, year])
 }
-
+ 
 model SavingsGoal {
   id           String    @id @default(cuid())
   name         String
-  targetAmount Float
-  savedAmount  Float     @default(0)
+  targetAmount Decimal   @db.Decimal(10, 2)
+  savedAmount  Decimal   @db.Decimal(10, 2) @default(0)
   deadline     DateTime?
   createdAt    DateTime  @default(now())
-
-  userId String
-  user   User   @relation(fields: [userId], references: [id])
+  userId       String
+  user         User      @relation(fields: [userId], references: [id])
 }
-
+ 
+model Wallet {
+  id        String     @id @default(cuid())
+  name      String
+  type      WalletType
+  balance   Decimal    @db.Decimal(10, 2) @default(0)
+  color     String?
+  icon      String?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  userId    String
+  user      User       @relation(fields: [userId], references: [id])
+  expenses  Expense[]
+}
+ 
 enum Category {
   RENT
   GROCERIES
@@ -71,5 +90,15 @@ enum Category {
   LEISURE
   HEALTH
   SAVINGS
+  OTHER
+}
+ 
+enum WalletType {
+  CASH
+  GCASH
+  MAYA
+  CREDIT_CARD
+  DEBIT_CARD
+  BANK
   OTHER
 }

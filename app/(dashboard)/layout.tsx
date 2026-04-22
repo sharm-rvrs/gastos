@@ -27,10 +27,10 @@ import {
 
 const navItems = [
   { label: "Dashboard", href: "/dashboard", icon: IconLayoutDashboard },
-  { label: "Expenses", href: "/dashboard/expenses", icon: IconReceipt },
-  { label: "Budgets", href: "/dashboard/budgets", icon: IconWallet },
-  { label: "Goals", href: "/dashboard/goals", icon: IconPigMoney },
-  { label: "Peso Buddy AI", href: "/dashboard/ai", icon: IconRobot },
+  { label: "Expenses", href: "/expenses", icon: IconReceipt },
+  { label: "Budgets", href: "/budgets", icon: IconWallet },
+  { label: "Goals", href: "/goals", icon: IconPigMoney },
+  { label: "Peso Buddy AI", href: "/ai", icon: IconRobot },
 ];
 
 export default function DashboardLayout({
