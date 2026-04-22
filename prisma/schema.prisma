@@ -37,11 +37,11 @@ model Expense {
 }
 
 model Budget {
-  id       String   @id @default(cuid())
-  category Category
-  limit    Float
-  month    Int
-  year     Int
+  id        String   @id @default(cuid())
+  category  Category
+  limit     Float
+  month     Int
+  year      Int
   createdAt DateTime @default(now())
 
   userId String
