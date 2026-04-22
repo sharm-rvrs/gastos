@@ -9,7 +9,20 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@mantine/charts": "^9.1.0",
+    "@mantine/core": "^9.1.0",
+    "@mantine/dates": "^9.1.0",
+    "@mantine/form": "^9.1.0",
+    "@mantine/hooks": "^9.1.0",
+    "@mantine/notifications": "^9.1.0",
+    "@prisma/client": "^7.7.0",
+    "@tabler/icons-react": "^3.41.1",
+    "dayjs": "^1.11.20",
+    "embla-carousel-react": "^8.6.0",
+    "groq-sdk": "^1.1.2",
     "next": "16.2.4",
+    "next-auth": "^4.24.14",
+    "prisma": "^7.7.0",
     "react": "19.2.4",
     "react-dom": "19.2.4"
   },
