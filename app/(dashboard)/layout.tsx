@@ -23,12 +23,14 @@ import {
   IconRobot,
   IconLogout,
   IconUser,
+  IconCreditCard,
 } from "@tabler/icons-react";
 
 const navItems = [
   { label: "Dashboard", href: "/dashboard", icon: IconLayoutDashboard },
   { label: "Expenses", href: "/expenses", icon: IconReceipt },
   { label: "Budgets", href: "/budgets", icon: IconWallet },
+  { label: "Wallets", href: "/wallets", icon: IconCreditCard },
   { label: "Goals", href: "/goals", icon: IconPigMoney },
   { label: "Peso Buddy AI", href: "/ai", icon: IconRobot },
 ];

@@ -42,8 +42,9 @@ model Expense {
   user        User      @relation(fields: [userId], references: [id])
   walletId    String?
   wallet      Wallet?   @relation(fields: [walletId], references: [id])
+  goalId      String?
+  goal        SavingsGoal? @relation(fields: [goalId], references: [id])
 }
- 
 model Budget {
   id        String   @id @default(cuid())
   category  Category
@@ -65,8 +66,9 @@ model SavingsGoal {
   createdAt    DateTime  @default(now())
   userId       String
   user         User      @relation(fields: [userId], references: [id])
+  expenses     Expense[]
 }
- 
+
 model Wallet {
   id        String     @id @default(cuid())
   name      String

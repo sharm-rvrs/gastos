@@ -278,6 +278,7 @@ export default function DashboardPage() {
               tooltipDataSource="segment"
               size={180}
               mx="auto"
+              h={200}
             />
           )}
         </Paper>

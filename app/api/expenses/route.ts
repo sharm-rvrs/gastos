@@ -3,8 +3,7 @@ import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db.server";
 import { NextRequest, NextResponse } from "next/server";
 
-// GET /api/expenses - fetch all expenses for current user
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     const session = await getServerSession(authOptions);
     if (!session) {
@@ -20,11 +19,21 @@ export async function GET(req: NextRequest) {
     }
 
     const expenses = await db.expense.findMany({
-      where: { userId: dbUser.id },
+      where: { userId: dbUser.id, deletedAt: null },
       orderBy: { date: "desc" },
+      include: { goal: { select: { id: true, name: true } } },
     });
 
-    return NextResponse.json(expenses);
+    return NextResponse.json(
+      expenses.map((e) => ({
+        ...e,
+        amount: parseFloat(e.amount.toString()),
+        totalAmount: e.totalAmount
+          ? parseFloat(e.totalAmount.toString())
+          : null,
+        yourShare: e.yourShare ? parseFloat(e.yourShare.toString()) : null,
+      })),
+    );
   } catch (error) {
     console.error("GET /api/expenses error:", error);
     return NextResponse.json(
@@ -34,7 +43,6 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// POST /api/expenses - create a new expense
 export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -51,7 +59,18 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { amount, description, category, date, isRecurring } = body;
+    const {
+      amount,
+      description,
+      category,
+      date,
+      isRecurring,
+      isSplit,
+      totalAmount,
+      splitWith,
+      walletId,
+      goalId,
+    } = body;
 
     if (!amount || !description || !category) {
       return NextResponse.json(
@@ -60,16 +79,60 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const parsedAmount = parseFloat(amount);
+
+    // Create the expense
     const expense = await db.expense.create({
       data: {
-        amount: parseFloat(amount),
+        amount: parsedAmount,
         description,
         category,
         date: date ? new Date(date) : new Date(),
         isRecurring: isRecurring ?? false,
+        isSplit: isSplit ?? false,
+        totalAmount: totalAmount ? parseFloat(totalAmount) : null,
+        splitWith: splitWith ?? null,
         userId: dbUser.id,
+        walletId: walletId ?? null,
+        goalId: goalId ?? null,
       },
     });
+
+    // If category is SAVINGS and a goal is selected, update goal savedAmount
+    if (category === "SAVINGS" && goalId) {
+      const goal = await db.savingsGoal.findUnique({
+        where: { id: goalId },
+      });
+
+      if (goal && goal.userId === dbUser.id) {
+        await db.savingsGoal.update({
+          where: { id: goalId },
+          data: {
+            savedAmount: {
+              increment: parsedAmount,
+            },
+          },
+        });
+      }
+    }
+
+    // If walletId provided, deduct from wallet balance
+    if (walletId) {
+      const wallet = await db.wallet.findUnique({
+        where: { id: walletId },
+      });
+
+      if (wallet && wallet.userId === dbUser.id) {
+        await db.wallet.update({
+          where: { id: walletId },
+          data: {
+            balance: {
+              decrement: parsedAmount,
+            },
+          },
+        });
+      }
+    }
 
     return NextResponse.json(expense, { status: 201 });
   } catch (error) {
