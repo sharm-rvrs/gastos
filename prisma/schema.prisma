@@ -12,12 +12,14 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  image     String?
-  payday    Int?     // day of month e.g. 15 or 30
-  createdAt DateTime @default(now())
+  id             String   @id @default(cuid())
+  email          String   @unique
+  name           String?
+  image          String?
+  payday         Int?
+  monthlyIncome  Decimal? @db.Decimal(10, 2)
+  onboardingDone Boolean  @default(false)
+  createdAt      DateTime @default(now())
 
   expenses  Expense[]
   budgets   Budget[]

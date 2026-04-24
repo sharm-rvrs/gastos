@@ -106,6 +106,14 @@ interface Budget {
   percentUsed: number;
 }
 
+interface Wallet {
+  id: string;
+  name: string;
+  type: string;
+  balance: string;
+  icon: string | null;
+}
+
 interface ExpenseFormProps {
   onSuccess?: () => void;
 }
@@ -114,6 +122,7 @@ export default function ExpenseForm({ onSuccess }: ExpenseFormProps) {
   const [loading, setLoading] = useState(false);
   const [goals, setGoals] = useState<Goal[]>([]);
   const [budgets, setBudgets] = useState<Budget[]>([]);
+  const [wallets, setWallets] = useState<Wallet[]>([]);
 
   const [form, setForm] = useState({
     amount: 0 as number,
@@ -125,6 +134,7 @@ export default function ExpenseForm({ onSuccess }: ExpenseFormProps) {
     totalAmount: 0 as number,
     splitWith: "",
     goalId: null as string | null,
+    walletId: null as string | null,
   });
 
   // Fetch goals for savings linking
@@ -140,6 +150,13 @@ export default function ExpenseForm({ onSuccess }: ExpenseFormProps) {
     fetch("/api/budgets")
       .then((r) => r.json())
       .then((data) => setBudgets(data.budgets ?? []))
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/wallets")
+      .then((r) => r.json())
+      .then(setWallets)
       .catch(() => {});
   }, []);
 
@@ -199,6 +216,7 @@ export default function ExpenseForm({ onSuccess }: ExpenseFormProps) {
           totalAmount: form.isSplit ? form.totalAmount : null,
           splitWith: form.isSplit ? form.splitWith : null,
           goalId: form.category === "SAVINGS" ? form.goalId : null,
+          walletId: form.walletId,
         }),
       });
 
@@ -222,6 +240,7 @@ export default function ExpenseForm({ onSuccess }: ExpenseFormProps) {
         totalAmount: 0,
         splitWith: "",
         goalId: null,
+        walletId: null,
       });
 
       onSuccess?.();
@@ -311,6 +330,46 @@ export default function ExpenseForm({ onSuccess }: ExpenseFormProps) {
           }
           required
         />
+        {/* Wallet Selector */}
+        {wallets.length > 0 && (
+          <Select
+            label="Paid with"
+            placeholder="Select wallet (optional)"
+            clearable
+            data={wallets.map((w) => ({
+              value: w.id,
+              label: `${w.icon ?? "💳"} ${w.name} — ₱${parseFloat(w.balance).toLocaleString("en-PH", { minimumFractionDigits: 2 })}`,
+            }))}
+            value={form.walletId}
+            onChange={(val) =>
+              setForm((f) => ({ ...f, walletId: val ?? null }))
+            }
+          />
+        )}
+
+        {wallets.length === 0 && (
+          <Alert
+            color="gray"
+            variant="light"
+            p="xs"
+            icon={<IconWallet size={14} />}
+          >
+            <Group justify="space-between" wrap="nowrap">
+              <Text size="xs" c="dimmed">
+                No wallets set up yet
+              </Text>
+              <Button
+                size="xs"
+                variant="subtle"
+                color="gray"
+                component="a"
+                href="/wallets"
+              >
+                Add wallet
+              </Button>
+            </Group>
+          </Alert>
+        )}
         {/* Budget Hint */}
         {form.category &&
           form.category !== "SAVINGS" &&
