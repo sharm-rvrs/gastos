@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
-import { MantineProvider } from "@mantine/core";
-import { Notifications } from "@mantine/notifications";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import SessionProvider from "@/components/ui/SessionProvider";
+import MantineAppProvider from "@/components/ui/MantineProvider";
 import "@mantine/core/styles.css";
 import "@mantine/notifications/styles.css";
 import "@mantine/charts/styles.css";
@@ -25,10 +24,7 @@ export default async function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body>
         <SessionProvider session={session}>
-          <MantineProvider defaultColorScheme="light">
-            <Notifications />
-            {children}
-          </MantineProvider>
+          <MantineAppProvider>{children}</MantineAppProvider>
         </SessionProvider>
       </body>
     </html>

@@ -14,7 +14,6 @@ import {
   Text,
   SimpleGrid,
   Alert,
-  Badge,
 } from "@mantine/core";
 import { DateInput } from "@mantine/dates";
 import { notifications } from "@mantine/notifications";
@@ -22,67 +21,56 @@ import {
   IconPlus,
   IconBolt,
   IconPigMoney,
-  IconAlertTriangle,
   IconWallet,
+  IconAlertTriangle,
+  IconRobot,
 } from "@tabler/icons-react";
-
-const CATEGORIES = [
-  { value: "RENT", label: "🏠 Rent" },
-  { value: "GROCERIES", label: "🛒 Groceries" },
-  { value: "TRANSPORT", label: "🚗 Transport" },
-  { value: "FOOD", label: "🍜 Food" },
-  { value: "UTILITIES", label: "💡 Utilities" },
-  { value: "LEISURE", label: "🎮 Leisure" },
-  { value: "HEALTH", label: "💊 Health" },
-  { value: "SAVINGS", label: "💰 Savings" },
-  { value: "OTHER", label: "📦 Other" },
-];
+import { WalletIcon, WALLET_SELECT_DATA } from "@/components/ui/WalletIcon";
+import {
+  CategoryIcon,
+  CATEGORY_SELECT_DATA,
+} from "@/components/ui/CategoryIcon";
 
 const QUICK_ADD = [
   {
-    label: "🚌 Jeepney",
+    label: "Jeepney",
     amount: 13,
     category: "TRANSPORT",
     description: "Jeepney fare",
   },
   {
-    label: "🚌 Jeepney+",
+    label: "Jeepney+",
     amount: 25,
     category: "TRANSPORT",
     description: "Jeepney fare",
   },
   {
-    label: "🚖 Grab",
+    label: "Grab",
     amount: 80,
     category: "TRANSPORT",
     description: "Grab ride",
   },
   {
-    label: "🍚 Siomai Rice",
+    label: "Siomai Rice",
     amount: 50,
     category: "FOOD",
     description: "Siomai rice",
   },
   {
-    label: "🍜 Carinderia",
+    label: "Carinderia",
     amount: 60,
     category: "FOOD",
     description: "Carinderia meal",
   },
+  { label: "7-Eleven", amount: 50, category: "FOOD", description: "7-Eleven" },
   {
-    label: "🏪 7-Eleven",
-    amount: 50,
-    category: "FOOD",
-    description: "7-Eleven",
-  },
-  {
-    label: "☕ 3-in-1",
+    label: "3-in-1",
     amount: 15,
     category: "FOOD",
     description: "3-in-1 coffee",
   },
   {
-    label: "🛒 Puregold",
+    label: "Puregold",
     amount: 300,
     category: "GROCERIES",
     description: "Puregold groceries",
@@ -123,7 +111,6 @@ export default function ExpenseForm({ onSuccess }: ExpenseFormProps) {
   const [goals, setGoals] = useState<Goal[]>([]);
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [wallets, setWallets] = useState<Wallet[]>([]);
-
   const [form, setForm] = useState({
     amount: 0 as number,
     description: "",
@@ -137,28 +124,32 @@ export default function ExpenseForm({ onSuccess }: ExpenseFormProps) {
     walletId: null as string | null,
   });
 
-  // Fetch goals for savings linking
   useEffect(() => {
     fetch("/api/goals")
       .then((r) => r.json())
       .then(setGoals)
       .catch(() => {});
-  }, []);
 
-  // Fetch budgets for hints
-  useEffect(() => {
     fetch("/api/budgets")
       .then((r) => r.json())
       .then((data) => setBudgets(data.budgets ?? []))
       .catch(() => {});
-  }, []);
 
-  useEffect(() => {
     fetch("/api/wallets")
       .then((r) => r.json())
       .then(setWallets)
       .catch(() => {});
   }, []);
+
+  const handleQuickAdd = (item: (typeof QUICK_ADD)[0]) => {
+    setForm((f) => ({
+      ...f,
+      amount: item.amount,
+      description: item.description,
+      category: item.category,
+      goalId: null,
+    }));
+  };
 
   const getBudgetHint = (category: string) => {
     if (!category) return null;
@@ -173,16 +164,6 @@ export default function ExpenseForm({ onSuccess }: ExpenseFormProps) {
     };
   };
 
-  const handleQuickAdd = (item: (typeof QUICK_ADD)[0]) => {
-    setForm((f) => ({
-      ...f,
-      amount: item.amount,
-      description: item.description,
-      category: item.category,
-      goalId: null,
-    }));
-  };
-
   const handleSubmit = async () => {
     if (!form.amount || !form.description || !form.category) {
       notifications.show({
@@ -193,7 +174,6 @@ export default function ExpenseForm({ onSuccess }: ExpenseFormProps) {
       return;
     }
 
-    // If savings category, warn if no goal selected
     if (form.category === "SAVINGS" && !form.goalId) {
       const confirmed = window.confirm(
         "No goal selected. This will be logged as General Savings. Continue?",
@@ -223,7 +203,7 @@ export default function ExpenseForm({ onSuccess }: ExpenseFormProps) {
       if (!res.ok) throw new Error("Failed to save expense");
 
       notifications.show({
-        title: "Saved! 💸",
+        title: "Saved!",
         message: `₱${form.amount.toLocaleString("en-PH", {
           minimumFractionDigits: 2,
         })} for ${form.description} logged`,
@@ -304,7 +284,10 @@ export default function ExpenseForm({ onSuccess }: ExpenseFormProps) {
             label="Date"
             value={form.date}
             onChange={(val) =>
-              setForm((f) => ({ ...f, date: val ? new Date(val) : new Date() }))
+              setForm((f) => ({
+                ...f,
+                date: val ? new Date(val) : new Date(),
+              }))
             }
             required
           />
@@ -323,31 +306,49 @@ export default function ExpenseForm({ onSuccess }: ExpenseFormProps) {
         <Select
           label="Category"
           placeholder="Select a category"
-          data={CATEGORIES}
+          data={CATEGORY_SELECT_DATA}
           value={form.category}
           onChange={(val) =>
             setForm((f) => ({ ...f, category: val ?? "", goalId: null }))
           }
+          renderOption={({ option }) => (
+            <Group gap="sm">
+              <CategoryIcon category={option.value} size={14} />
+              <Text size="sm">{option.label}</Text>
+            </Group>
+          )}
           required
         />
+
         {/* Wallet Selector */}
-        {wallets.length > 0 && (
+        {wallets.length > 0 ? (
           <Select
             label="Paid with"
             placeholder="Select wallet (optional)"
             clearable
             data={wallets.map((w) => ({
               value: w.id,
-              label: `${w.icon ?? "💳"} ${w.name} — ₱${parseFloat(w.balance).toLocaleString("en-PH", { minimumFractionDigits: 2 })}`,
+              label: `${w.name} — ₱${parseFloat(w.balance).toLocaleString(
+                "en-PH",
+                { minimumFractionDigits: 2 },
+              )}`,
             }))}
             value={form.walletId}
             onChange={(val) =>
               setForm((f) => ({ ...f, walletId: val ?? null }))
             }
+            renderOption={({ option }) => {
+              const wallet = wallets.find((w) => w.id === option.value);
+              if (!wallet) return <Text size="sm">{option.label}</Text>;
+              return (
+                <Group gap="sm">
+                  <WalletIcon type={wallet.type} size={14} />
+                  <Text size="sm">{option.label}</Text>
+                </Group>
+              );
+            }}
           />
-        )}
-
-        {wallets.length === 0 && (
+        ) : (
           <Alert
             color="gray"
             variant="light"
@@ -370,6 +371,7 @@ export default function ExpenseForm({ onSuccess }: ExpenseFormProps) {
             </Group>
           </Alert>
         )}
+
         {/* Budget Hint */}
         {form.category &&
           form.category !== "SAVINGS" &&
@@ -417,21 +419,18 @@ export default function ExpenseForm({ onSuccess }: ExpenseFormProps) {
                 <Group justify="space-between" wrap="nowrap">
                   <Text size="xs">
                     {hint.percentUsed >= 100
-                      ? `⚠️ Over budget! ₱${Math.abs(hint.remaining).toLocaleString("en-PH")} exceeded`
-                      : `₱${hint.remaining.toLocaleString("en-PH", { minimumFractionDigits: 2 })} remaining of ₱${hint.limit.toLocaleString("en-PH")} budget`}
+                      ? `⚠️ Over budget! ₱${Math.abs(
+                          hint.remaining,
+                        ).toLocaleString("en-PH")} exceeded`
+                      : `₱${hint.remaining.toLocaleString("en-PH", {
+                          minimumFractionDigits: 2,
+                        })} remaining of ₱${hint.limit.toLocaleString(
+                          "en-PH",
+                        )} budget`}
                   </Text>
-                  <Badge
-                    size="xs"
-                    color={
-                      hint.percentUsed >= 100
-                        ? "red"
-                        : hint.percentUsed >= 80
-                          ? "orange"
-                          : "teal"
-                    }
-                  >
+                  <Text size="xs" fw={600}>
                     {hint.percentUsed}% used
-                  </Badge>
+                  </Text>
                 </Group>
               </Alert>
             );
@@ -457,12 +456,12 @@ export default function ExpenseForm({ onSuccess }: ExpenseFormProps) {
                 <Select
                   placeholder="Select a goal (or leave for General Savings)"
                   clearable
-                  data={[
-                    ...activeGoals.map((g) => ({
-                      value: g.id,
-                      label: `🎯 ${g.name} — ₱${g.savedAmount.toLocaleString("en-PH")} / ₱${g.targetAmount.toLocaleString("en-PH")}`,
-                    })),
-                  ]}
+                  data={activeGoals.map((g) => ({
+                    value: g.id,
+                    label: `${g.name} — ₱${g.savedAmount.toLocaleString(
+                      "en-PH",
+                    )} / ₱${g.targetAmount.toLocaleString("en-PH")}`,
+                  }))}
                   value={form.goalId}
                   onChange={(val) =>
                     setForm((f) => ({ ...f, goalId: val ?? null }))

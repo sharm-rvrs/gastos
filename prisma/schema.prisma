@@ -16,7 +16,8 @@ model User {
   email          String   @unique
   name           String?
   image          String?
-  payday         Int?
+  payday         Int?      // first payday
+  payday2        Int?      // second payday 
   monthlyIncome  Decimal? @db.Decimal(10, 2)
   onboardingDone Boolean  @default(false)
   createdAt      DateTime @default(now())

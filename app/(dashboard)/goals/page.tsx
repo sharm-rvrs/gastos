@@ -129,7 +129,7 @@ export default function GoalsPage() {
       if (!res.ok) throw new Error("Failed to save goal");
 
       notifications.show({
-        title: editingGoal ? "Goal updated! ✅" : "Goal created! 🎯",
+        title: editingGoal ? "Goal updated!" : "Goal created!",
         message: `${form.name} has been ${editingGoal ? "updated" : "created"} successfully`,
         color: "green",
       });
@@ -166,7 +166,7 @@ export default function GoalsPage() {
       const isCompleted = newSaved >= addingProgress.targetAmount;
 
       notifications.show({
-        title: isCompleted ? "Goal completed! 🎉" : "Progress added! 💪",
+        title: isCompleted ? "Goal completed!" : "Progress added!",
         message: isCompleted
           ? `You reached your ${addingProgress.name} goal!`
           : `₱${addAmount.toLocaleString("en-PH")} added to ${addingProgress.name}`,
@@ -213,7 +213,12 @@ export default function GoalsPage() {
     <Stack gap="md">
       <Group justify="space-between">
         <div>
-          <Title order={2}>Savings Goals 🎯</Title>
+          <Group gap="sm" align="center">
+            <ThemeIcon size={34} radius="xl" variant="light">
+              <IconPigMoney size={18} />
+            </ThemeIcon>
+            <Title order={2}>Savings Goals</Title>
+          </Group>
           <Text c="dimmed" size="sm">
             Track your targets — emergency fund, gadgets, travel, and more
           </Text>

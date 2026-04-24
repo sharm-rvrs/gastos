@@ -9,7 +9,7 @@ export default function LoginPage() {
       <Paper radius="md" p="xl" withBorder>
         <Stack align="center" gap="md">
           <Title order={1} style={{ fontSize: 32 }}>
-            💸 Gastos
+            Gastos
           </Title>
           <Text c="dimmed" size="sm" ta="center">
             Your personal budget tracker for Manila life

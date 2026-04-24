@@ -12,10 +12,12 @@ import {
   Loader,
   Center,
   SimpleGrid,
+  ThemeIcon,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import { IconTrash, IconRepeat } from "@tabler/icons-react";
+import { IconTrash, IconRepeat, IconReceipt } from "@tabler/icons-react";
 import ExpenseForm from "@/components/expenses/ExpenseForm";
+import { CategoryIcon } from "@/components/ui/CategoryIcon";
 
 const CATEGORY_COLORS: Record<string, string> = {
   RENT: "blue",
@@ -30,15 +32,15 @@ const CATEGORY_COLORS: Record<string, string> = {
 };
 
 const CATEGORY_LABELS: Record<string, string> = {
-  RENT: "🏠 Rent",
-  GROCERIES: "🛒 Groceries",
-  TRANSPORT: "🚗 Transport",
-  FOOD: "🍜 Food",
-  UTILITIES: "💡 Utilities",
-  LEISURE: "🎮 Leisure",
-  HEALTH: "💊 Health",
-  SAVINGS: "💰 Savings",
-  OTHER: "📦 Other",
+  RENT: "Rent",
+  GROCERIES: "Groceries",
+  TRANSPORT: "Transport",
+  FOOD: "Food",
+  UTILITIES: "Utilities",
+  LEISURE: "Leisure",
+  HEALTH: "Health",
+  SAVINGS: "Savings",
+  OTHER: "Other",
 };
 
 interface Expense {
@@ -101,7 +103,12 @@ export default function ExpensesPage() {
   return (
     <Stack gap="md">
       <div>
-        <Title order={2}>Expenses 💸</Title>
+        <Group gap="sm" align="center" mb={4}>
+          <ThemeIcon size={34} radius="xl" variant="light">
+            <IconReceipt size={18} />
+          </ThemeIcon>
+          <Title order={2}>Expenses</Title>
+        </Group>
         <Text c="dimmed" size="sm">
           Log and manage your daily expenses
         </Text>
@@ -139,7 +146,7 @@ export default function ExpensesPage() {
           </Center>
         ) : expenses.length === 0 ? (
           <Text c="dimmed" ta="center" py="xl">
-            No expenses yet. Add your first one above! 💸
+            No expenses yet. Add your first one above!
           </Text>
         ) : (
           <Stack gap="xs">
@@ -149,7 +156,10 @@ export default function ExpensesPage() {
                 p="sm"
                 radius="md"
                 withBorder
-                style={{ backgroundColor: "var(--mantine-color-gray-0)" }}
+                style={{
+                  backgroundColor: "var(--mantine-color-default)",
+                  borderColor: "var(--mantine-color-default-border)",
+                }}
               >
                 <Group justify="space-between" wrap="nowrap">
                   <Group gap="sm" wrap="nowrap">
@@ -166,12 +176,14 @@ export default function ExpensesPage() {
                         )}
                       </Group>
                       <Group gap="xs">
+                        <CategoryIcon category={expense.category} size={14} />
                         <Badge
                           size="xs"
                           color={CATEGORY_COLORS[expense.category]}
                           variant="light"
                         >
-                          {CATEGORY_LABELS[expense.category]}
+                          {CATEGORY_LABELS[expense.category] ??
+                            expense.category}
                         </Badge>
                         <Text size="xs" c="dimmed">
                           {new Date(expense.date).toLocaleDateString("en-PH", {

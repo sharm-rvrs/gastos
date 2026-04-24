@@ -22,30 +22,11 @@ import {
 import { useDisclosure } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { IconPlus, IconTrash, IconWallet } from "@tabler/icons-react";
-
-const CATEGORIES = [
-  { value: "RENT", label: "🏠 Rent" },
-  { value: "GROCERIES", label: "🛒 Groceries" },
-  { value: "TRANSPORT", label: "🚗 Transport" },
-  { value: "FOOD", label: "🍜 Food" },
-  { value: "UTILITIES", label: "💡 Utilities" },
-  { value: "LEISURE", label: "🎮 Leisure" },
-  { value: "HEALTH", label: "💊 Health" },
-  { value: "SAVINGS", label: "💰 Savings" },
-  { value: "OTHER", label: "📦 Other" },
-];
-
-const CATEGORY_COLORS: Record<string, string> = {
-  RENT: "blue",
-  GROCERIES: "green",
-  TRANSPORT: "yellow",
-  FOOD: "orange",
-  UTILITIES: "cyan",
-  LEISURE: "grape",
-  HEALTH: "red",
-  SAVINGS: "teal",
-  OTHER: "gray",
-};
+import {
+  CategoryIcon,
+  CATEGORY_LABELS,
+  CATEGORY_SELECT_DATA,
+} from "@/components/ui/CategoryIcon";
 
 interface Budget {
   id: string;
@@ -131,9 +112,9 @@ export default function BudgetsPage() {
       if (!res.ok) throw new Error("Failed to save budget");
 
       notifications.show({
-        title: "Budget saved! 💰",
+        title: "Budget saved!",
         message: `₱${form.limit.toLocaleString("en-PH")} budget set for ${
-          CATEGORIES.find((c) => c.value === form.category)?.label
+          CATEGORY_LABELS[form.category] ?? form.category
         }`,
         color: "green",
       });
@@ -192,7 +173,12 @@ export default function BudgetsPage() {
     <Stack gap="md">
       <Group justify="space-between">
         <div>
-          <Title order={2}>Budgets 💰</Title>
+          <Group gap="sm" align="center">
+            <ThemeIcon size={34} radius="xl" variant="light">
+              <IconWallet size={18} />
+            </ThemeIcon>
+            <Title order={2}>Budgets</Title>
+          </Group>
           <Text c="dimmed" size="sm">
             {MONTH_NAMES[month - 1]} {year} — Set your monthly spending limits
           </Text>
@@ -246,9 +232,7 @@ export default function BudgetsPage() {
       ) : budgets.length === 0 ? (
         <Paper p="xl" radius="md" withBorder>
           <Stack align="center" gap="sm">
-            <ThemeIcon size={48} radius="xl" variant="light" color="blue">
-              <IconWallet size={24} />
-            </ThemeIcon>
+            <IconWallet size={24} />
             <Text fw={500}>No budgets set yet</Text>
             <Text c="dimmed" size="sm" ta="center">
               Set monthly limits for each spending category to track your budget
@@ -266,12 +250,12 @@ export default function BudgetsPage() {
               <Paper key={budget.id} p="md" radius="md" withBorder>
                 <Group justify="space-between" mb="xs">
                   <Group gap="sm">
-                    <Text fw={600}>
-                      {
-                        CATEGORIES.find((c) => c.value === budget.category)
-                          ?.label
-                      }
-                    </Text>
+                    <Group gap="xs" wrap="nowrap">
+                      <CategoryIcon category={budget.category} size={14} />
+                      <Text fw={600}>
+                        {CATEGORY_LABELS[budget.category] ?? budget.category}
+                      </Text>
+                    </Group>
                     <Badge size="xs" color={status.color} variant="light">
                       {status.label}
                     </Badge>
@@ -337,11 +321,17 @@ export default function BudgetsPage() {
           <Select
             label="Category"
             placeholder="Select a category"
-            data={CATEGORIES.filter(
+            data={CATEGORY_SELECT_DATA.filter(
               (c) => !budgets.find((b) => b.category === c.value),
             )}
             value={form.category}
             onChange={(val) => setForm((f) => ({ ...f, category: val ?? "" }))}
+            renderOption={({ option }) => (
+              <Group gap="sm">
+                <CategoryIcon category={option.value} size={14} />
+                <Text size="sm">{option.label}</Text>
+              </Group>
+            )}
             required
           />
           <NumberInput

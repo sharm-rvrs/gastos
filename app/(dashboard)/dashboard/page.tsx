@@ -15,8 +15,11 @@ import {
   Alert,
   Button,
   ThemeIcon,
+  Box,
+  useMantineTheme,
+  getThemeColor,
 } from "@mantine/core";
-import { PieChart } from "@mantine/charts";
+import { Cell, Pie, PieChart as RechartsPieChart, Tooltip } from "recharts";
 import {
   IconAlertTriangle,
   IconRepeat,
@@ -24,9 +27,11 @@ import {
   IconChartPie,
   IconPlus,
   IconArrowRight,
+  IconLayoutDashboard,
 } from "@tabler/icons-react";
 import { notifications } from "@mantine/notifications";
 import { useRouter } from "next/navigation";
+import { WalletIcon } from "@/components/ui/WalletIcon";
 
 const CATEGORY_COLORS: Record<string, string> = {
   RENT: "blue",
@@ -41,15 +46,15 @@ const CATEGORY_COLORS: Record<string, string> = {
 };
 
 const CATEGORY_LABELS: Record<string, string> = {
-  RENT: "🏠 Rent",
-  GROCERIES: "🛒 Groceries",
-  TRANSPORT: "🚗 Transport",
-  FOOD: "🍜 Food",
-  UTILITIES: "💡 Utilities",
-  LEISURE: "🎮 Leisure",
-  HEALTH: "💊 Health",
-  SAVINGS: "💰 Savings",
-  OTHER: "📦 Other",
+  RENT: "Rent",
+  GROCERIES: "Groceries",
+  TRANSPORT: "Transport",
+  FOOD: "Food",
+  UTILITIES: "Utilities",
+  LEISURE: "Leisure",
+  HEALTH: "Health",
+  SAVINGS: "Savings",
+  OTHER: "Other",
 };
 
 interface DashboardData {
@@ -99,6 +104,7 @@ export default function DashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const theme = useMantineTheme();
 
   useEffect(() => {
     fetch("/api/dashboard")
@@ -130,6 +136,11 @@ export default function DashboardPage() {
     color: CATEGORY_COLORS[cat] ?? "gray",
   }));
 
+  const pieDataWithFill = pieData.map((item) => ({
+    ...item,
+    fill: getThemeColor(item.color, theme),
+  }));
+
   const budgetUsedPercent =
     data.totalBudget > 0
       ? Math.min(Math.round((data.totalSpent / data.totalBudget) * 100), 100)
@@ -144,7 +155,12 @@ export default function DashboardPage() {
       {/* Header */}
       <Group justify="space-between">
         <div>
-          <Title order={2}>Dashboard 📊</Title>
+          <Group gap="sm" align="center">
+            <ThemeIcon size={34} radius="xl" variant="light">
+              <IconLayoutDashboard size={18} />
+            </ThemeIcon>
+            <Title order={2}>Dashboard</Title>
+          </Group>
           <Text c="dimmed" size="sm">
             {MONTH_NAMES[data.month - 1]} {data.year} overview
           </Text>
@@ -155,12 +171,12 @@ export default function DashboardPage() {
       {data.isPetsaDePeligro && (
         <Alert
           icon={<IconAlertTriangle size={18} />}
-          title="Petsa de Peligro! 🚨"
+          title="Petsa de Peligro!"
           color="red"
           variant="light"
         >
           Your budget is running low! Stick to essentials only — groceries,
-          transport, and utilities. Leisure can wait! 💪
+          transport, and utilities. Leisure can wait!
         </Alert>
       )}
 
@@ -176,7 +192,7 @@ export default function DashboardPage() {
             {!hasBudgets && (
               <Group gap="sm">
                 <Text size="sm">
-                  💰 Set your monthly budgets to track spending per category
+                  Set your monthly budgets to track spending per category
                 </Text>
                 <Button
                   size="xs"
@@ -192,7 +208,7 @@ export default function DashboardPage() {
             {!hasWallets && (
               <Group gap="sm">
                 <Text size="sm">
-                  💳 Add your GCash, Maya, or Cash wallet to track balances
+                  Add your GCash, Maya, or Cash wallet to track balances
                 </Text>
                 <Button
                   size="xs"
@@ -391,14 +407,53 @@ export default function DashboardPage() {
               </Button>
             </Stack>
           ) : (
-            <PieChart
-              data={pieData}
-              withTooltip
-              tooltipDataSource="segment"
-              size={180}
-              mx="auto"
+            <Box
               h={200}
-            />
+              w="100%"
+              miw={0}
+              style={{ display: "flex", justifyContent: "center" }}
+            >
+              <RechartsPieChart width={200} height={200}>
+                <Pie
+                  data={pieDataWithFill}
+                  dataKey="value"
+                  nameKey="name"
+                  innerRadius={0}
+                  outerRadius={80}
+                  isAnimationActive={false}
+                  stroke="var(--mantine-color-body)"
+                  strokeWidth={1}
+                >
+                  {pieDataWithFill.map((entry) => (
+                    <Cell key={entry.name} fill={entry.fill} />
+                  ))}
+                </Pie>
+
+                <Tooltip
+                  isAnimationActive={false}
+                  content={({ active, payload }) => {
+                    const item = payload?.[0];
+                    if (!active || !item) return null;
+
+                    const value =
+                      typeof item.value === "number" ? item.value : 0;
+                    return (
+                      <Paper p="xs" radius="md" withBorder shadow="sm">
+                        <Text size="xs" fw={600}>
+                          {item.name}
+                        </Text>
+                        <Text size="xs" c="dimmed">
+                          ₱
+                          {value.toLocaleString("en-PH", {
+                            minimumFractionDigits: 2,
+                          })}
+                        </Text>
+                      </Paper>
+                    );
+                  }}
+                />
+              </RechartsPieChart>
+            </Box>
           )}
         </Paper>
       </SimpleGrid>
@@ -441,7 +496,8 @@ export default function DashboardPage() {
                 p="xs"
                 style={{
                   borderRadius: 8,
-                  background: "var(--mantine-color-gray-0)",
+                  background: "var(--mantine-color-default)",
+                  border: "1px solid var(--mantine-color-default-border)",
                 }}
               >
                 <Group gap="sm">
@@ -486,11 +542,10 @@ export default function DashboardPage() {
         )}
       </Paper>
 
-      {/* Wallets */}
       {hasWallets && (
         <Paper p="md" radius="md" withBorder>
           <Group justify="space-between" mb="md">
-            <Text fw={500}>My Wallets 💳</Text>
+            <Text fw={500}>My Wallets</Text>
             <Button
               size="xs"
               variant="subtle"
@@ -503,10 +558,13 @@ export default function DashboardPage() {
           <SimpleGrid cols={{ base: 2, sm: 3, md: 4 }} spacing="sm">
             {data.wallets.map((wallet) => (
               <Paper key={wallet.id} p="sm" radius="md" withBorder>
-                <Text size="xs" c="dimmed">
-                  {wallet.icon} {wallet.name}
-                </Text>
-                <Text fw={700} size="sm" mt={4}>
+                <Group gap="sm" mb={4}>
+                  <WalletIcon type={wallet.icon ?? "default"} size={14} />
+                  <Text size="xs" c="dimmed" fw={500}>
+                    {wallet.name}
+                  </Text>
+                </Group>
+                <Text fw={700} size="sm">
                   ₱
                   {parseFloat(wallet.balance).toLocaleString("en-PH", {
                     minimumFractionDigits: 2,

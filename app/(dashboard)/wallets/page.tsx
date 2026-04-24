@@ -26,39 +26,14 @@ import {
   IconTrash,
   IconEdit,
   IconWallet,
-  IconCash,
   IconCreditCard,
 } from "@tabler/icons-react";
-
-const WALLET_TYPES = [
-  { value: "CASH", label: "💵 Cash" },
-  { value: "GCASH", label: "💙 GCash" },
-  { value: "MAYA", label: "💚 Maya" },
-  { value: "CREDIT_CARD", label: "💳 Credit Card" },
-  { value: "DEBIT_CARD", label: "🏧 Debit Card" },
-  { value: "BANK", label: "🏦 Bank" },
-  { value: "OTHER", label: "📦 Other" },
-];
-
-const WALLET_ICONS: Record<string, string> = {
-  CASH: "💵",
-  GCASH: "💙",
-  MAYA: "💚",
-  CREDIT_CARD: "💳",
-  DEBIT_CARD: "🏧",
-  BANK: "🏦",
-  OTHER: "📦",
-};
-
-const WALLET_COLORS: Record<string, string> = {
-  CASH: "green",
-  GCASH: "blue",
-  MAYA: "teal",
-  CREDIT_CARD: "grape",
-  DEBIT_CARD: "orange",
-  BANK: "cyan",
-  OTHER: "gray",
-};
+import {
+  WalletIcon,
+  WALLET_TYPES,
+  WALLET_COLORS,
+  WALLET_SELECT_DATA,
+} from "@/components/ui/WalletIcon";
 
 interface Wallet {
   id: string;
@@ -135,6 +110,8 @@ export default function WalletsPage() {
         : "/api/wallets";
       const method = editingWallet ? "PUT" : "POST";
 
+      const walletType = WALLET_TYPES.find((w) => w.value === form.type);
+
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
@@ -142,15 +119,15 @@ export default function WalletsPage() {
           name: form.name,
           type: form.type,
           balance: form.balance,
-          icon: WALLET_ICONS[form.type] ?? "📦",
-          color: WALLET_COLORS[form.type] ?? "gray",
+          color: walletType?.color ?? "gray",
+          icon: walletType?.value ?? "OTHER",
         }),
       });
 
       if (!res.ok) throw new Error("Failed to save wallet");
 
       notifications.show({
-        title: editingWallet ? "Wallet updated! ✅" : "Wallet added! 💳",
+        title: editingWallet ? "Wallet updated!" : "Wallet added!",
         message: `${form.name} has been ${editingWallet ? "updated" : "added"} successfully`,
         color: "green",
       });
@@ -196,7 +173,12 @@ export default function WalletsPage() {
     <Stack gap="md">
       <Group justify="space-between">
         <div>
-          <Title order={2}>Wallets 💳</Title>
+          <Group gap="sm" align="center">
+            <ThemeIcon size={34} radius="xl" variant="light">
+              <IconCreditCard size={18} />
+            </ThemeIcon>
+            <Title order={2}>Wallets</Title>
+          </Group>
           <Text c="dimmed" size="sm">
             Track your GCash, Maya, Cash and other balances
           </Text>
@@ -209,7 +191,7 @@ export default function WalletsPage() {
         </Button>
       </Group>
 
-      {/* Total Balance Card */}
+      {/* Total Balance */}
       <Paper p="md" radius="md" withBorder>
         <Text size="xs" c="dimmed" tt="uppercase" fw={500}>
           Total Balance Across All Wallets
@@ -250,7 +232,7 @@ export default function WalletsPage() {
             <Paper key={wallet.id} p="md" radius="md" withBorder>
               <Group justify="space-between" mb="sm">
                 <Group gap="sm">
-                  <Text size="xl">{WALLET_ICONS[wallet.type] ?? "📦"}</Text>
+                  <WalletIcon type={wallet.type} size={18} />
                   <div>
                     <Text fw={600} size="sm">
                       {wallet.name}
@@ -260,9 +242,8 @@ export default function WalletsPage() {
                       color={WALLET_COLORS[wallet.type] ?? "gray"}
                       variant="light"
                     >
-                      {WALLET_TYPES.find(
-                        (t) => t.value === wallet.type,
-                      )?.label.split(" ")[1] ?? wallet.type}
+                      {WALLET_TYPES.find((t) => t.value === wallet.type)
+                        ?.label ?? wallet.type}
                     </Badge>
                   </div>
                 </Group>
@@ -304,19 +285,26 @@ export default function WalletsPage() {
         centered
       >
         <Stack gap="sm">
+          <Select
+            label="Wallet Type"
+            placeholder="Select type"
+            data={WALLET_SELECT_DATA}
+            value={form.type}
+            onChange={(val) => {
+              const walletType = WALLET_TYPES.find((w) => w.value === val);
+              setForm((f) => ({
+                ...f,
+                type: val ?? "",
+                name: walletType?.label ?? f.name,
+              }));
+            }}
+            required
+          />
           <TextInput
             label="Wallet Name"
             placeholder="e.g. My GCash, BDO Savings..."
             value={form.name}
             onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-            required
-          />
-          <Select
-            label="Wallet Type"
-            placeholder="Select type"
-            data={WALLET_TYPES}
-            value={form.type}
-            onChange={(val) => setForm((f) => ({ ...f, type: val ?? "" }))}
             required
           />
           <NumberInput
@@ -327,6 +315,27 @@ export default function WalletsPage() {
             value={form.balance}
             onChange={(val) => setForm((f) => ({ ...f, balance: Number(val) }))}
           />
+
+          {/* Preview */}
+          {form.type && (
+            <Paper p="sm" radius="md" withBorder>
+              <Group gap="sm">
+                <WalletIcon type={form.type} size={18} />
+                <div>
+                  <Text size="sm" fw={600}>
+                    {form.name || "Wallet Preview"}
+                  </Text>
+                  <Text size="xs" c="dimmed">
+                    ₱
+                    {form.balance.toLocaleString("en-PH", {
+                      minimumFractionDigits: 2,
+                    })}
+                  </Text>
+                </div>
+              </Group>
+            </Paper>
+          )}
+
           <Button onClick={handleSave} loading={saving} fullWidth>
             {editingWallet ? "Save Changes" : "Add Wallet"}
           </Button>
