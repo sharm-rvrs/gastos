@@ -14,10 +14,17 @@ import {
   Text,
   SimpleGrid,
   Alert,
+  Badge,
 } from "@mantine/core";
 import { DateInput } from "@mantine/dates";
 import { notifications } from "@mantine/notifications";
-import { IconPlus, IconBolt, IconPigMoney } from "@tabler/icons-react";
+import {
+  IconPlus,
+  IconBolt,
+  IconPigMoney,
+  IconAlertTriangle,
+  IconWallet,
+} from "@tabler/icons-react";
 
 const CATEGORIES = [
   { value: "RENT", label: "🏠 Rent" },
@@ -90,6 +97,15 @@ interface Goal {
   percentSaved: number;
 }
 
+interface Budget {
+  id: string;
+  category: string;
+  limit: number;
+  spent: number;
+  remaining: number;
+  percentUsed: number;
+}
+
 interface ExpenseFormProps {
   onSuccess?: () => void;
 }
@@ -97,6 +113,8 @@ interface ExpenseFormProps {
 export default function ExpenseForm({ onSuccess }: ExpenseFormProps) {
   const [loading, setLoading] = useState(false);
   const [goals, setGoals] = useState<Goal[]>([]);
+  const [budgets, setBudgets] = useState<Budget[]>([]);
+
   const [form, setForm] = useState({
     amount: 0 as number,
     description: "",
@@ -116,6 +134,27 @@ export default function ExpenseForm({ onSuccess }: ExpenseFormProps) {
       .then(setGoals)
       .catch(() => {});
   }, []);
+
+  // Fetch budgets for hints
+  useEffect(() => {
+    fetch("/api/budgets")
+      .then((r) => r.json())
+      .then((data) => setBudgets(data.budgets ?? []))
+      .catch(() => {});
+  }, []);
+
+  const getBudgetHint = (category: string) => {
+    if (!category) return null;
+    const budget = budgets.find((b) => b.category === category);
+    if (!budget) return { type: "none" as const };
+    return {
+      type: "found" as const,
+      limit: budget.limit,
+      spent: budget.spent,
+      remaining: budget.remaining,
+      percentUsed: budget.percentUsed,
+    };
+  };
 
   const handleQuickAdd = (item: (typeof QUICK_ADD)[0]) => {
     setForm((f) => ({
@@ -272,6 +311,72 @@ export default function ExpenseForm({ onSuccess }: ExpenseFormProps) {
           }
           required
         />
+        {/* Budget Hint */}
+        {form.category &&
+          form.category !== "SAVINGS" &&
+          (() => {
+            const hint = getBudgetHint(form.category);
+            if (!hint) return null;
+
+            if (hint.type === "none") {
+              return (
+                <Alert
+                  color="yellow"
+                  variant="light"
+                  p="xs"
+                  icon={<IconAlertTriangle size={14} />}
+                >
+                  <Group justify="space-between" wrap="nowrap">
+                    <Text size="xs">No budget set for this category yet</Text>
+                    <Button
+                      size="xs"
+                      variant="subtle"
+                      color="yellow"
+                      component="a"
+                      href="/budgets"
+                    >
+                      Set budget
+                    </Button>
+                  </Group>
+                </Alert>
+              );
+            }
+
+            return (
+              <Alert
+                color={
+                  hint.percentUsed >= 100
+                    ? "red"
+                    : hint.percentUsed >= 80
+                      ? "orange"
+                      : "teal"
+                }
+                variant="light"
+                p="xs"
+                icon={<IconWallet size={14} />}
+              >
+                <Group justify="space-between" wrap="nowrap">
+                  <Text size="xs">
+                    {hint.percentUsed >= 100
+                      ? `⚠️ Over budget! ₱${Math.abs(hint.remaining).toLocaleString("en-PH")} exceeded`
+                      : `₱${hint.remaining.toLocaleString("en-PH", { minimumFractionDigits: 2 })} remaining of ₱${hint.limit.toLocaleString("en-PH")} budget`}
+                  </Text>
+                  <Badge
+                    size="xs"
+                    color={
+                      hint.percentUsed >= 100
+                        ? "red"
+                        : hint.percentUsed >= 80
+                          ? "orange"
+                          : "teal"
+                    }
+                  >
+                    {hint.percentUsed}% used
+                  </Badge>
+                </Group>
+              </Alert>
+            );
+          })()}
 
         {/* Goal Selector — only shows when SAVINGS is selected */}
         {form.category === "SAVINGS" && (

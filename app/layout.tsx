@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { MantineProvider, ColorSchemeScript } from "@mantine/core";
+import { MantineProvider } from "@mantine/core";
 import { Notifications } from "@mantine/notifications";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -23,12 +23,9 @@ export default async function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning>
-      <head>
-        <ColorSchemeScript />
-      </head>
       <body>
         <SessionProvider session={session}>
-          <MantineProvider>
+          <MantineProvider defaultColorScheme="light">
             <Notifications />
             {children}
           </MantineProvider>

@@ -13,4 +13,12 @@ AI-powered insights (Peso Buddy), expense tracking, budget limits, and savings g
 
 ## Status
 
-In Development — Week 1
+In Development
+
+## Notes
+
+To clean the database
+npx prisma db push --force-reset
+
+npx prisma generate
+npx prisma db push

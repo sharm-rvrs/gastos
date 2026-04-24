@@ -13,10 +13,20 @@ import {
   Center,
   RingProgress,
   Alert,
+  Button,
+  ThemeIcon,
 } from "@mantine/core";
 import { PieChart } from "@mantine/charts";
-import { IconAlertTriangle, IconRepeat } from "@tabler/icons-react";
+import {
+  IconAlertTriangle,
+  IconRepeat,
+  IconWallet,
+  IconChartPie,
+  IconPlus,
+  IconArrowRight,
+} from "@tabler/icons-react";
 import { notifications } from "@mantine/notifications";
+import { useRouter } from "next/navigation";
 
 const CATEGORY_COLORS: Record<string, string> = {
   RENT: "blue",
@@ -88,6 +98,7 @@ const MONTH_NAMES = [
 export default function DashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
     fetch("/api/dashboard")
@@ -124,6 +135,10 @@ export default function DashboardPage() {
       ? Math.min(Math.round((data.totalSpent / data.totalBudget) * 100), 100)
       : 0;
 
+  const hasExpenses = data.recentExpenses.length > 0;
+  const hasBudgets = data.totalBudget > 0;
+  const hasWallets = data.wallets.length > 0;
+
   return (
     <Stack gap="md">
       {/* Header */}
@@ -149,36 +164,101 @@ export default function DashboardPage() {
         </Alert>
       )}
 
+      {/* Onboarding hints — show if missing key setup */}
+      {(!hasBudgets || !hasWallets) && (
+        <Alert
+          icon={<IconArrowRight size={18} />}
+          title="Complete your setup to get the most out of Gastos!"
+          color="blue"
+          variant="light"
+        >
+          <Stack gap="xs" mt="xs">
+            {!hasBudgets && (
+              <Group gap="sm">
+                <Text size="sm">
+                  💰 Set your monthly budgets to track spending per category
+                </Text>
+                <Button
+                  size="xs"
+                  variant="light"
+                  color="blue"
+                  onClick={() => router.push("/budgets")}
+                  rightSection={<IconArrowRight size={12} />}
+                >
+                  Set Budgets
+                </Button>
+              </Group>
+            )}
+            {!hasWallets && (
+              <Group gap="sm">
+                <Text size="sm">
+                  💳 Add your GCash, Maya, or Cash wallet to track balances
+                </Text>
+                <Button
+                  size="xs"
+                  variant="light"
+                  color="blue"
+                  onClick={() => router.push("/wallets")}
+                  rightSection={<IconArrowRight size={12} />}
+                >
+                  Add Wallet
+                </Button>
+              </Group>
+            )}
+          </Stack>
+        </Alert>
+      )}
+
       {/* Summary Cards */}
       <SimpleGrid cols={{ base: 1, sm: 2, md: 4 }} spacing="md">
         <Paper p="md" radius="md" withBorder>
           <Text size="xs" c="dimmed" tt="uppercase" fw={500}>
             Total Spent
           </Text>
-          <Text size="xl" fw={700} c="red" mt={4}>
-            ₱
-            {data.totalSpent.toLocaleString("en-PH", {
-              minimumFractionDigits: 2,
-            })}
+          <Text size="xl" fw={700} c={hasExpenses ? "red" : "dimmed"} mt={4}>
+            {hasExpenses
+              ? `₱${data.totalSpent.toLocaleString("en-PH", { minimumFractionDigits: 2 })}`
+              : "₱0.00"}
           </Text>
           <Text size="xs" c="dimmed" mt={4}>
-            this month
+            {hasExpenses ? "this month" : "no expenses yet"}
           </Text>
+          {!hasExpenses && (
+            <Button
+              size="xs"
+              variant="subtle"
+              mt="xs"
+              leftSection={<IconPlus size={12} />}
+              onClick={() => router.push("/expenses")}
+            >
+              Add expense
+            </Button>
+          )}
         </Paper>
 
         <Paper p="md" radius="md" withBorder>
           <Text size="xs" c="dimmed" tt="uppercase" fw={500}>
             Total Budget
           </Text>
-          <Text size="xl" fw={700} mt={4}>
-            ₱
-            {data.totalBudget.toLocaleString("en-PH", {
-              minimumFractionDigits: 2,
-            })}
+          <Text size="xl" fw={700} c={hasBudgets ? "dark" : "dimmed"} mt={4}>
+            {hasBudgets
+              ? `₱${data.totalBudget.toLocaleString("en-PH", { minimumFractionDigits: 2 })}`
+              : "Not set"}
           </Text>
           <Text size="xs" c="dimmed" mt={4}>
-            monthly limit
+            {hasBudgets ? "monthly limit" : "no budgets yet"}
           </Text>
+          {!hasBudgets && (
+            <Button
+              size="xs"
+              variant="subtle"
+              mt="xs"
+              leftSection={<IconPlus size={12} />}
+              onClick={() => router.push("/budgets")}
+            >
+              Set budget
+            </Button>
+          )}
         </Paper>
 
         <Paper p="md" radius="md" withBorder>
@@ -188,16 +268,19 @@ export default function DashboardPage() {
           <Text
             size="xl"
             fw={700}
-            c={data.remaining < 0 ? "red" : "green"}
+            c={!hasBudgets ? "dimmed" : data.remaining < 0 ? "red" : "green"}
             mt={4}
           >
-            ₱
-            {data.remaining.toLocaleString("en-PH", {
-              minimumFractionDigits: 2,
-            })}
+            {hasBudgets
+              ? `₱${data.remaining.toLocaleString("en-PH", { minimumFractionDigits: 2 })}`
+              : "—"}
           </Text>
           <Text size="xs" c="dimmed" mt={4}>
-            {data.remaining < 0 ? "over budget!" : "left to spend"}
+            {!hasBudgets
+              ? "set a budget first"
+              : data.remaining < 0
+                ? "over budget!"
+                : "left to spend"}
           </Text>
         </Paper>
 
@@ -205,29 +288,51 @@ export default function DashboardPage() {
           <Text size="xs" c="dimmed" tt="uppercase" fw={500}>
             Wallet Balance
           </Text>
-          <Text size="xl" fw={700} c="blue" mt={4}>
-            ₱
-            {data.totalWalletBalance.toLocaleString("en-PH", {
-              minimumFractionDigits: 2,
-            })}
+          <Text size="xl" fw={700} c={hasWallets ? "blue" : "dimmed"} mt={4}>
+            {hasWallets
+              ? `₱${data.totalWalletBalance.toLocaleString("en-PH", { minimumFractionDigits: 2 })}`
+              : "Not set"}
           </Text>
           <Text size="xs" c="dimmed" mt={4}>
-            across all wallets
+            {hasWallets ? "across all wallets" : "no wallets yet"}
           </Text>
+          {!hasWallets && (
+            <Button
+              size="xs"
+              variant="subtle"
+              mt="xs"
+              leftSection={<IconPlus size={12} />}
+              onClick={() => router.push("/wallets")}
+            >
+              Add wallet
+            </Button>
+          )}
         </Paper>
       </SimpleGrid>
 
       {/* Budget Usage + Pie Chart */}
       <SimpleGrid cols={{ base: 1, md: 2 }} spacing="md">
-        {/* Budget Ring */}
         <Paper p="md" radius="md" withBorder>
           <Text fw={500} mb="md">
             Budget Usage
           </Text>
-          {data.totalBudget === 0 ? (
-            <Text c="dimmed" size="sm" ta="center" py="xl">
-              No budgets set yet. Go to Budgets to set monthly limits!
-            </Text>
+          {!hasBudgets ? (
+            <Stack align="center" gap="sm" py="xl">
+              <ThemeIcon size={48} radius="xl" variant="light" color="blue">
+                <IconWallet size={24} />
+              </ThemeIcon>
+              <Text c="dimmed" size="sm" ta="center">
+                No budgets set yet. Set monthly limits to see your usage here.
+              </Text>
+              <Button
+                size="xs"
+                variant="light"
+                onClick={() => router.push("/budgets")}
+                rightSection={<IconArrowRight size={12} />}
+              >
+                Set Budgets
+              </Button>
+            </Stack>
           ) : (
             <Group justify="center">
               <RingProgress
@@ -262,15 +367,29 @@ export default function DashboardPage() {
           )}
         </Paper>
 
-        {/* Pie Chart */}
         <Paper p="md" radius="md" withBorder>
           <Text fw={500} mb="md">
             Spending by Category
           </Text>
-          {pieData.length === 0 ? (
-            <Text c="dimmed" size="sm" ta="center" py="xl">
-              No expenses yet this month.
-            </Text>
+          {!hasExpenses ? (
+            <Stack align="center" gap="sm" py="xl">
+              <ThemeIcon size={48} radius="xl" variant="light" color="orange">
+                <IconChartPie size={24} />
+              </ThemeIcon>
+              <Text c="dimmed" size="sm" ta="center">
+                No expenses yet this month. Start logging to see your spending
+                breakdown!
+              </Text>
+              <Button
+                size="xs"
+                variant="light"
+                color="orange"
+                onClick={() => router.push("/expenses")}
+                rightSection={<IconArrowRight size={12} />}
+              >
+                Add Expense
+              </Button>
+            </Stack>
           ) : (
             <PieChart
               data={pieData}
@@ -286,13 +405,33 @@ export default function DashboardPage() {
 
       {/* Recent Expenses */}
       <Paper p="md" radius="md" withBorder>
-        <Title order={4} mb="md">
-          Recent Expenses
-        </Title>
-        {data.recentExpenses.length === 0 ? (
-          <Text c="dimmed" ta="center" py="xl">
-            No expenses yet this month. Start logging! 💸
-          </Text>
+        <Group justify="space-between" mb="md">
+          <Text fw={500}>Recent Expenses</Text>
+          {hasExpenses && (
+            <Button
+              size="xs"
+              variant="subtle"
+              onClick={() => router.push("/expenses")}
+              rightSection={<IconArrowRight size={12} />}
+            >
+              View all
+            </Button>
+          )}
+        </Group>
+        {!hasExpenses ? (
+          <Stack align="center" gap="sm" py="xl">
+            <Text c="dimmed" size="sm" ta="center">
+              No expenses logged this month yet.
+            </Text>
+            <Button
+              size="xs"
+              variant="light"
+              leftSection={<IconPlus size={12} />}
+              onClick={() => router.push("/expenses")}
+            >
+              Log your first expense
+            </Button>
+          </Stack>
         ) : (
           <Stack gap="xs">
             {data.recentExpenses.map((expense) => (
@@ -348,11 +487,19 @@ export default function DashboardPage() {
       </Paper>
 
       {/* Wallets */}
-      {data.wallets.length > 0 && (
+      {hasWallets && (
         <Paper p="md" radius="md" withBorder>
-          <Title order={4} mb="md">
-            My Wallets 💳
-          </Title>
+          <Group justify="space-between" mb="md">
+            <Text fw={500}>My Wallets 💳</Text>
+            <Button
+              size="xs"
+              variant="subtle"
+              onClick={() => router.push("/wallets")}
+              rightSection={<IconArrowRight size={12} />}
+            >
+              Manage
+            </Button>
+          </Group>
           <SimpleGrid cols={{ base: 2, sm: 3, md: 4 }} spacing="sm">
             {data.wallets.map((wallet) => (
               <Paper key={wallet.id} p="sm" radius="md" withBorder>
