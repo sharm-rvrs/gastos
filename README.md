@@ -6,7 +6,7 @@ A full-stack personal finance web application built for solo living in Manila, P
 
 ---
 
-## ✨ Features
+## Features
 
 - **Expense Tracking** — Log daily expenses with categories, descriptions, dates, and recurring flags
 - **Quick-Add Buttons** — One-tap preset buttons for common Manila expenses (Jeepney ₱13, Siomai Rice ₱50, Grab ₱80)
@@ -23,7 +23,7 @@ A full-stack personal finance web application built for solo living in Manila, P
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 | Layer      | Technology                           |
 | ---------- | ------------------------------------ |
