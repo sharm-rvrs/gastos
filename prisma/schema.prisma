@@ -26,6 +26,7 @@ model User {
   budgets   Budget[]
   goals     SavingsGoal[]
   wallets   Wallet[]
+  incomes   Income[]
 }
  
 model Expense {
@@ -84,6 +85,28 @@ model Wallet {
   userId    String
   user      User       @relation(fields: [userId], references: [id])
   expenses  Expense[]
+}
+
+model Income {
+  id          String       @id @default(cuid())
+  amount      Decimal      @db.Decimal(10, 2)
+  description String
+  source      IncomeSource
+  date        DateTime     @default(now())
+  month       Int
+  year        Int
+  createdAt   DateTime     @default(now())
+  userId      String
+  user        User         @relation(fields: [userId], references: [id])
+}
+
+enum IncomeSource {
+  SALARY
+  FREELANCE
+  COMMISSION
+  BUSINESS
+  ALLOWANCE
+  OTHER
 }
  
 enum Category {

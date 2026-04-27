@@ -18,6 +18,7 @@ import {
   Box,
   useMantineTheme,
   getThemeColor,
+  Progress,
 } from "@mantine/core";
 import { Cell, Pie, PieChart as RechartsPieChart, Tooltip } from "recharts";
 import {
@@ -28,6 +29,10 @@ import {
   IconPlus,
   IconArrowRight,
   IconLayoutDashboard,
+  IconCash,
+  IconTrendingUp,
+  IconTrendingDown,
+  IconCalendar,
 } from "@tabler/icons-react";
 import { notifications } from "@mantine/notifications";
 import { useRouter } from "next/navigation";
@@ -60,6 +65,8 @@ const CATEGORY_LABELS: Record<string, string> = {
 interface DashboardData {
   totalSpent: number;
   totalBudget: number;
+  totalIncome: number;
+  savingsPool: number;
   remaining: number;
   savingsRate: number;
   byCategory: Record<string, number>;
@@ -76,11 +83,13 @@ interface DashboardData {
   wallets: {
     id: string;
     name: string;
+    type: string;
     balance: string;
     icon: string | null;
     color: string | null;
   }[];
   isPetsaDePeligro: boolean;
+  daysUntilPayday: number | null;
   month: number;
   year: number;
 }
@@ -149,6 +158,12 @@ export default function DashboardPage() {
   const hasExpenses = data.recentExpenses.length > 0;
   const hasBudgets = data.totalBudget > 0;
   const hasWallets = data.wallets.length > 0;
+  const hasIncome = data.totalIncome > 0;
+
+  const incomeUsedPercent =
+    data.totalIncome > 0
+      ? Math.min(Math.round((data.totalSpent / data.totalIncome) * 100), 100)
+      : 0;
 
   return (
     <Stack gap="md">
@@ -165,6 +180,23 @@ export default function DashboardPage() {
             {MONTH_NAMES[data.month - 1]} {data.year} overview
           </Text>
         </div>
+        {data.daysUntilPayday !== null && (
+          <Paper p="sm" radius="md" withBorder>
+            <Group gap="xs">
+              <IconCalendar size={16} color="var(--mantine-color-blue-5)" />
+              <div>
+                <Text size="xs" c="dimmed">
+                  Next payday
+                </Text>
+                <Text size="sm" fw={700} c="blue">
+                  {data.daysUntilPayday === 0
+                    ? "Today!"
+                    : `${data.daysUntilPayday} days`}
+                </Text>
+              </div>
+            </Group>
+          </Paper>
+        )}
       </Group>
 
       {/* Petsa de Peligro Alert */}
@@ -180,8 +212,126 @@ export default function DashboardPage() {
         </Alert>
       )}
 
+      {/* Income vs Expenses vs Savings */}
+      {hasIncome && (
+        <Paper p="md" radius="md" withBorder>
+          <Group justify="space-between" mb="md">
+            <Text fw={600}>Monthly Overview</Text>
+            <Button
+              size="xs"
+              variant="subtle"
+              onClick={() => router.push("/income")}
+              rightSection={<IconArrowRight size={12} />}
+            >
+              Manage income
+            </Button>
+          </Group>
+
+          <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="md" mb="md">
+            <Group gap="sm">
+              <ThemeIcon color="green" variant="light" size={40} radius="xl">
+                <IconTrendingUp size={20} />
+              </ThemeIcon>
+              <div>
+                <Text size="xs" c="dimmed">
+                  Income
+                </Text>
+                <Text fw={700} c="green">
+                  ₱
+                  {data.totalIncome.toLocaleString("en-PH", {
+                    minimumFractionDigits: 2,
+                  })}
+                </Text>
+              </div>
+            </Group>
+
+            <Group gap="sm">
+              <ThemeIcon color="red" variant="light" size={40} radius="xl">
+                <IconTrendingDown size={20} />
+              </ThemeIcon>
+              <div>
+                <Text size="xs" c="dimmed">
+                  Expenses
+                </Text>
+                <Text fw={700} c="red">
+                  ₱
+                  {data.totalSpent.toLocaleString("en-PH", {
+                    minimumFractionDigits: 2,
+                  })}
+                </Text>
+              </div>
+            </Group>
+
+            <Group gap="sm">
+              <ThemeIcon
+                color={data.savingsPool >= 0 ? "teal" : "red"}
+                variant="light"
+                size={40}
+                radius="xl"
+              >
+                <IconCash size={20} />
+              </ThemeIcon>
+              <div>
+                <Text size="xs" c="dimmed">
+                  Savings Pool
+                </Text>
+                <Text fw={700} c={data.savingsPool >= 0 ? "teal" : "red"}>
+                  ₱
+                  {data.savingsPool.toLocaleString("en-PH", {
+                    minimumFractionDigits: 2,
+                  })}
+                </Text>
+              </div>
+            </Group>
+          </SimpleGrid>
+
+          <Stack gap={4}>
+            <Group justify="space-between">
+              <Text size="xs" c="dimmed">
+                {incomeUsedPercent}% of income spent
+              </Text>
+              <Badge
+                size="xs"
+                color={
+                  data.savingsRate < 0
+                    ? "red"
+                    : data.savingsRate < 10
+                      ? "orange"
+                      : data.savingsRate < 20
+                        ? "yellow"
+                        : "teal"
+                }
+                variant="light"
+              >
+                {data.savingsRate}% savings rate
+              </Badge>
+            </Group>
+            <Progress
+              value={incomeUsedPercent}
+              color={
+                incomeUsedPercent >= 100
+                  ? "red"
+                  : incomeUsedPercent >= 80
+                    ? "orange"
+                    : "teal"
+              }
+              size="md"
+              radius="xl"
+            />
+            <Group justify="space-between">
+              <Text size="xs" c="dimmed">
+                ₱0
+              </Text>
+              <Text size="xs" c="dimmed">
+                ₱{data.totalIncome.toLocaleString("en-PH")}
+              </Text>
+            </Group>
+          </Stack>
+        </Paper>
+      )}
+
       {/* Onboarding hints — show if missing key setup */}
-      {(!hasBudgets || !hasWallets) && (
+      {(!hasBudgets || !hasWallets || !hasIncome) && (
         <Alert
           icon={<IconArrowRight size={18} />}
           title="Complete your setup to get the most out of Gastos!"
@@ -189,10 +339,26 @@ export default function DashboardPage() {
           variant="light"
         >
           <Stack gap="xs" mt="xs">
+            {!hasIncome && (
+              <Group gap="sm">
+                <Text size="sm">
+                  Log your income to track your savings rate
+                </Text>
+                <Button
+                  size="xs"
+                  variant="light"
+                  color="blue"
+                  onClick={() => router.push("/income")}
+                  rightSection={<IconArrowRight size={12} />}
+                >
+                  Log Income
+                </Button>
+              </Group>
+            )}
             {!hasBudgets && (
               <Group gap="sm">
                 <Text size="sm">
-                  Set your monthly budgets to track spending per category
+                  Set monthly budgets to track spending per category
                 </Text>
                 <Button
                   size="xs"
@@ -207,9 +373,7 @@ export default function DashboardPage() {
             )}
             {!hasWallets && (
               <Group gap="sm">
-                <Text size="sm">
-                  Add your GCash, Maya, or Cash wallet to track balances
-                </Text>
+                <Text size="sm">Add your GCash, Maya, or Cash wallet</Text>
                 <Button
                   size="xs"
                   variant="light"
@@ -559,7 +723,7 @@ export default function DashboardPage() {
             {data.wallets.map((wallet) => (
               <Paper key={wallet.id} p="sm" radius="md" withBorder>
                 <Group gap="sm" mb={4}>
-                  <WalletIcon type={wallet.icon ?? "default"} size={14} />
+                  <WalletIcon type={wallet.type ?? "OTHER"} size={14} />
                   <Text size="xs" c="dimmed" fw={500}>
                     {wallet.name}
                   </Text>

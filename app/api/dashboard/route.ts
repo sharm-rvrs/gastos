@@ -44,17 +44,27 @@ export async function GET() {
       where: { userId: dbUser.id },
     });
 
-    // Total spent this month
+    // Income this month
+    const incomes = await db.income.findMany({
+      where: { userId: dbUser.id, month, year },
+    });
+
+    // Calculations
     const totalSpent = expenses.reduce(
       (sum, e) => sum + parseFloat(e.amount.toString()),
       0,
     );
-
-    // Total budget this month
     const totalBudget = budgets.reduce(
       (sum, b) => sum + parseFloat(b.limit.toString()),
       0,
     );
+    const totalIncome = incomes.reduce(
+      (sum, i) => sum + parseFloat(i.amount.toString()),
+      0,
+    );
+
+    // Savings pool = income - expenses
+    const savingsPool = totalIncome - totalSpent;
 
     // Spending by category
     const byCategory = expenses.reduce(
@@ -66,7 +76,7 @@ export async function GET() {
       {} as Record<string, number>,
     );
 
-    // Daily spending for chart (last 30 days)
+    // Daily spending
     const dailySpending = expenses.reduce(
       (acc, e) => {
         const day = new Date(e.date).getDate().toString();
@@ -76,32 +86,55 @@ export async function GET() {
       {} as Record<string, number>,
     );
 
-    // Total wallet balance
+    // Wallet totals
     const totalWalletBalance = wallets.reduce(
       (sum, w) => sum + parseFloat(w.balance.toString()),
       0,
     );
 
-    // Recent expenses (last 5)
+    // Recent expenses
     const recentExpenses = expenses.slice(0, 5);
+
+    // Payday countdown
+    const today = now.getDate();
+    let daysUntilPayday: number | null = null;
+    if (dbUser.payday || dbUser.payday2) {
+      const paydays = [dbUser.payday, dbUser.payday2]
+        .filter(Boolean)
+        .map(Number)
+        .sort((a, b) => a - b);
+
+      const nextPayday = paydays.find((d) => d > today);
+      if (nextPayday) {
+        daysUntilPayday = nextPayday - today;
+      } else {
+        // Next payday is next month
+        daysUntilPayday =
+          paydays[0] + (new Date(year, month, 0).getDate() - today);
+      }
+    }
+
+    // Petsa de Peligro
+    const isPetsaDePeligro =
+      totalBudget > 0 && (totalBudget - totalSpent) / totalBudget < 0.2;
 
     return NextResponse.json({
       totalSpent,
       totalBudget,
+      totalIncome,
+      savingsPool,
       remaining: totalBudget - totalSpent,
       savingsRate:
-        totalBudget > 0
-          ? Math.round(((totalBudget - totalSpent) / totalBudget) * 100)
-          : 0,
+        totalIncome > 0 ? Math.round((savingsPool / totalIncome) * 100) : 0,
       byCategory,
       dailySpending,
       recentExpenses,
       totalWalletBalance,
       wallets,
+      isPetsaDePeligro,
+      daysUntilPayday,
       month,
       year,
-      isPetsaDePeligro:
-        totalBudget > 0 && (totalBudget - totalSpent) / totalBudget < 0.2,
     });
   } catch (error) {
     console.error("GET /api/dashboard error:", error);

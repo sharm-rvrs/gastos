@@ -29,10 +29,12 @@ import {
   IconCreditCard,
   IconMoon,
   IconSun,
+  IconCash,
 } from "@tabler/icons-react";
 
 const navItems = [
   { label: "Dashboard", href: "/dashboard", icon: IconLayoutDashboard },
+  { label: "Income", href: "/income", icon: IconCash },
   { label: "Expenses", href: "/expenses", icon: IconReceipt },
   { label: "Budgets", href: "/budgets", icon: IconWallet },
   { label: "Wallets", href: "/wallets", icon: IconCreditCard },
@@ -96,7 +98,11 @@ export default function DashboardLayout({
                 onClick={() => setColorScheme(isDark ? "light" : "dark")}
                 aria-label={toggleLabel}
               >
-                {mounted && isDark ? <IconSun size={18} /> : <IconMoon size={18} />}
+                {mounted && isDark ? (
+                  <IconSun size={18} />
+                ) : (
+                  <IconMoon size={18} />
+                )}
               </ActionIcon>
             </Tooltip>
 
