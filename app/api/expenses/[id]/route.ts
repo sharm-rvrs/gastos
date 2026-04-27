@@ -22,16 +22,16 @@ export async function DELETE(
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const expense = await db.expense.findUnique({
-      where: { id },
-    });
+    const expense = await db.expense.findUnique({ where: { id } });
 
     if (!expense || expense.userId !== dbUser.id) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    await db.expense.delete({
+    // Soft delete — set deletedAt instead of removing
+    await db.expense.update({
       where: { id },
+      data: { deletedAt: new Date() },
     });
 
     return NextResponse.json({ success: true });

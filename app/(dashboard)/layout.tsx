@@ -30,6 +30,7 @@ import {
   IconMoon,
   IconSun,
   IconCash,
+  IconTrash,
 } from "@tabler/icons-react";
 
 const navItems = [
@@ -40,6 +41,7 @@ const navItems = [
   { label: "Wallets", href: "/wallets", icon: IconCreditCard },
   { label: "Goals", href: "/goals", icon: IconPigMoney },
   { label: "Peso Buddy AI", href: "/ai", icon: IconRobot },
+  { label: "Trash", href: "/trash", icon: IconTrash },
 ];
 
 export default function DashboardLayout({
