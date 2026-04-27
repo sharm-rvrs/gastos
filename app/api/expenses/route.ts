@@ -3,7 +3,7 @@ import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db.server";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session) {
@@ -18,10 +18,44 @@ export async function GET() {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
+    // Parse query params
+    const { searchParams } = new URL(req.url);
+    const search = searchParams.get("search") ?? "";
+    const category = searchParams.get("category") ?? "";
+    const month = searchParams.get("month") ?? "";
+    const year = searchParams.get("year") ?? "";
+    const sortBy = searchParams.get("sortBy") ?? "date";
+    const sortOrder = searchParams.get("sortOrder") ?? "desc";
+
+    const now = new Date();
+
     const expenses = await db.expense.findMany({
-      where: { userId: dbUser.id, deletedAt: null },
-      orderBy: { date: "desc" },
-      include: { goal: { select: { id: true, name: true } } },
+      where: {
+        userId: dbUser.id,
+        deletedAt: null,
+        ...(category ? { category: category as any } : {}),
+        ...(search
+          ? {
+              description: { contains: search, mode: "insensitive" as any },
+            }
+          : {}),
+        ...(month && year
+          ? {
+              date: {
+                gte: new Date(parseInt(year), parseInt(month) - 1, 1),
+                lte: new Date(parseInt(year), parseInt(month), 0, 23, 59, 59),
+              },
+            }
+          : {}),
+      },
+      orderBy:
+        sortBy === "amount"
+          ? { amount: sortOrder as any }
+          : { date: sortOrder as any },
+      include: {
+        goal: { select: { id: true, name: true } },
+        wallet: { select: { id: true, name: true, type: true } },
+      },
     });
 
     return NextResponse.json(
