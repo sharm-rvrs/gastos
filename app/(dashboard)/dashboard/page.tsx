@@ -37,30 +37,8 @@ import {
 import { notifications } from "@mantine/notifications";
 import { useRouter } from "next/navigation";
 import { WalletIcon } from "@/components/ui/WalletIcon";
-
-const CATEGORY_COLORS: Record<string, string> = {
-  RENT: "blue",
-  GROCERIES: "green",
-  TRANSPORT: "yellow.6",
-  FOOD: "orange",
-  UTILITIES: "cyan",
-  LEISURE: "grape",
-  HEALTH: "red",
-  SAVINGS: "teal",
-  OTHER: "gray",
-};
-
-const CATEGORY_LABELS: Record<string, string> = {
-  RENT: "Rent",
-  GROCERIES: "Groceries",
-  TRANSPORT: "Transport",
-  FOOD: "Food",
-  UTILITIES: "Utilities",
-  LEISURE: "Leisure",
-  HEALTH: "Health",
-  SAVINGS: "Savings",
-  OTHER: "Other",
-};
+import MonthlyComparisonChart from "@/components/dashboard/MonthlyComparisonChart";
+import { CATEGORY_COLORS, CATEGORY_LABELS } from "@/components/ui/CategoryIcon";
 
 interface DashboardData {
   totalSpent: number;
@@ -92,6 +70,16 @@ interface DashboardData {
   daysUntilPayday: number | null;
   month: number;
   year: number;
+  totalLastMonthSpent: number;
+  totalLastMonthIncome: number;
+  lastMonthByCategory: Record<string, number>;
+  sixMonthTrend: {
+    month: number;
+    year: number;
+    label: string;
+    spent: number;
+    income: number;
+  }[];
 }
 
 const MONTH_NAMES = [
@@ -621,6 +609,15 @@ export default function DashboardPage() {
           )}
         </Paper>
       </SimpleGrid>
+
+      {/* Monthly Comparison Chart */}
+      <MonthlyComparisonChart
+        sixMonthTrend={data.sixMonthTrend ?? []}
+        totalSpent={data.totalSpent}
+        totalLastMonthSpent={data.totalLastMonthSpent ?? 0}
+        totalIncome={data.totalIncome}
+        totalLastMonthIncome={data.totalLastMonthIncome ?? 0}
+      />
 
       {/* Recent Expenses */}
       <Paper p="md" radius="md" withBorder>

@@ -49,6 +49,79 @@ export async function GET() {
       where: { userId: dbUser.id, month, year },
     });
 
+    const lastMonth = month === 1 ? 12 : month - 1;
+    const lastMonthYear = month === 1 ? year - 1 : year;
+    const startOfLastMonth = new Date(lastMonthYear, lastMonth - 1, 1);
+    const endOfLastMonth = new Date(lastMonthYear, lastMonth, 0, 23, 59, 59);
+
+    const lastMonthExpenses = await db.expense.findMany({
+      where: {
+        userId: dbUser.id,
+        deletedAt: null,
+        date: { gte: startOfLastMonth, lte: endOfLastMonth },
+      },
+    });
+
+    const lastMonthIncome = await db.income.findMany({
+      where: { userId: dbUser.id, month: lastMonth, year: lastMonthYear },
+    });
+
+    const totalLastMonthSpent = lastMonthExpenses.reduce(
+      (sum, e) => sum + parseFloat(e.amount.toString()),
+      0,
+    );
+
+    const totalLastMonthIncome = lastMonthIncome.reduce(
+      (sum, i) => sum + parseFloat(i.amount.toString()),
+      0,
+    );
+
+    const lastMonthByCategory = lastMonthExpenses.reduce(
+      (acc, e) => {
+        acc[e.category] =
+          (acc[e.category] || 0) + parseFloat(e.amount.toString());
+        return acc;
+      },
+      {} as Record<string, number>,
+    );
+
+    // 6-month trend
+    const sixMonthTrend = await Promise.all(
+      Array.from({ length: 6 }, async (_, i) => {
+        const d = new Date(year, month - 1 - i, 1);
+        const m = d.getMonth() + 1;
+        const y = d.getFullYear();
+        const start = new Date(y, m - 1, 1);
+        const end = new Date(y, m, 0, 23, 59, 59);
+
+        const monthExpenses = await db.expense.findMany({
+          where: {
+            userId: dbUser.id,
+            deletedAt: null,
+            date: { gte: start, lte: end },
+          },
+        });
+
+        const monthIncome = await db.income.findMany({
+          where: { userId: dbUser.id, month: m, year: y },
+        });
+
+        return {
+          month: m,
+          year: y,
+          label: d.toLocaleString("en-PH", { month: "short" }),
+          spent: monthExpenses.reduce(
+            (sum, e) => sum + parseFloat(e.amount.toString()),
+            0,
+          ),
+          income: monthIncome.reduce(
+            (sum, i) => sum + parseFloat(i.amount.toString()),
+            0,
+          ),
+        };
+      }),
+    );
+
     // Calculations
     const totalSpent = expenses.reduce(
       (sum, e) => sum + parseFloat(e.amount.toString()),
@@ -135,6 +208,10 @@ export async function GET() {
       daysUntilPayday,
       month,
       year,
+      totalLastMonthSpent,
+      totalLastMonthIncome,
+      lastMonthByCategory,
+      sixMonthTrend: sixMonthTrend.reverse(),
     });
   } catch (error) {
     console.error("GET /api/dashboard error:", error);

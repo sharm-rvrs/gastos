@@ -22,43 +22,12 @@ import {
 import { DateInput } from "@mantine/dates";
 import { useDisclosure } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
+import { IconPlus, IconTrash, IconCash } from "@tabler/icons-react";
 import {
-  IconPlus,
-  IconTrash,
-  IconCash,
-  IconBriefcase,
-  IconTrendingUp,
-  IconBuildingStore,
-  IconGift,
-  IconPackage,
-} from "@tabler/icons-react";
-
-const INCOME_SOURCES = [
-  { value: "SALARY", label: "Salary" },
-  { value: "FREELANCE", label: "Freelance" },
-  { value: "COMMISSION", label: "Commission" },
-  { value: "BUSINESS", label: "Business" },
-  { value: "ALLOWANCE", label: "Allowance" },
-  { value: "OTHER", label: "Other" },
-];
-
-const SOURCE_COLORS: Record<string, string> = {
-  SALARY: "blue",
-  FREELANCE: "teal",
-  COMMISSION: "green",
-  BUSINESS: "grape",
-  ALLOWANCE: "orange",
-  OTHER: "gray",
-};
-
-const SOURCE_ICONS: Record<string, React.ReactNode> = {
-  SALARY: <IconCash size={16} />,
-  FREELANCE: <IconBriefcase size={16} />,
-  COMMISSION: <IconTrendingUp size={16} />,
-  BUSINESS: <IconBuildingStore size={16} />,
-  ALLOWANCE: <IconGift size={16} />,
-  OTHER: <IconPackage size={16} />,
-};
+  INCOME_SOURCES,
+  SOURCE_COLORS,
+  SOURCE_ICONS,
+} from "@/components/ui/IncomeIcon";
 
 interface Income {
   id: string;
