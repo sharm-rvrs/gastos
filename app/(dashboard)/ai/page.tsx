@@ -26,7 +26,7 @@ export default function AIPage() {
             </Badge>
           </Group>
           <Text c="dimmed" size="sm">
-            Your personal Filipino finance assistant — tipid tips, budget
+            Your personal Filipino finance assistant: tipid tips, budget
             advice, and more!
           </Text>
         </div>

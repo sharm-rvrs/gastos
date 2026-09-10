@@ -34,46 +34,21 @@ import {
 const QUICK_ADD = [
   {
     label: "Jeepney",
-    amount: 13,
-    category: "TRANSPORT",
-    description: "Jeepney fare",
-  },
-  {
-    label: "Jeepney+",
-    amount: 25,
-    category: "TRANSPORT",
-    description: "Jeepney fare",
-  },
-  {
-    label: "Grab",
-    amount: 80,
-    category: "TRANSPORT",
-    description: "Grab ride",
-  },
-  {
-    label: "Siomai Rice",
-    amount: 50,
-    category: "FOOD",
-    description: "Siomai rice",
-  },
-  {
-    label: "Carinderia",
-    amount: 60,
-    category: "FOOD",
-    description: "Carinderia meal",
-  },
-  { label: "7-Eleven", amount: 50, category: "FOOD", description: "7-Eleven" },
-  {
-    label: "3-in-1",
     amount: 15,
-    category: "FOOD",
-    description: "3-in-1 coffee",
+    category: "TRANSPORT",
+    description: "Jeepney fare",
   },
   {
-    label: "Puregold",
-    amount: 300,
-    category: "GROCERIES",
-    description: "Puregold groceries",
+    label: "MoveIt",
+    amount: 50,
+    category: "TRANSPORT",
+    description: "MoveIt ride",
+  },
+  {
+    label: "Angkas",
+    amount: 64,
+    category: "TRANSPORT",
+    description: "Angkas ride",
   },
 ];
 
